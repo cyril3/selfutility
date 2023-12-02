@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+tmp_path="/mnt/bout"        #tmp dir
+base_ver="HEAD"
+diff_ver=""
+pwd_str=$PWD
+pwd_str=${pwd_str##*/}      #current dir name
+
+if [ ! -d $tmp_path ];
+then
+    echo creating ${tmp_path}.
+    sudo mkdir -p ${tmp_path}
+fi
+
+fstype=`eval mount | grep ${tmp_path} | awk '{print $1;}'`      #get tmp_path fs type
+if [ "$fstype" != "tmpfs" ];
+then
+    sudo mount -t tmpfs tmpfs ${tmp_path}           #mount as tmpfs
+fi
+
+if [ -n "$1" ];
+then
+    base_ver=$1;
+fi
+if [ -n "$2" ];
+then
+    diff_ver=$2;
+fi
+
+base_hash=`eval git rev-parse --short ${base_ver}`      #get version hash
+if [ $? != 0 ];
+then
+    echo "Error: export $base_ver failed."
+    exit $?
+fi
+
+base_path=${pwd_str}_$base_hash
+
+if [ -n "$diff_ver" ];          # diff is not empty
+then
+    diff_hash=`eval git rev-parse --short ${diff_ver}`  #get version hash
+    if [ $? != 0 ];
+    then
+        echo "Error: export $diff_ver failed."
+        exit $?
+    fi
+    diff_path=${pwd_str}_$diff_hash
+
+    if [ $diff_hash != $base_hash ];
+    then
+        #export diff version code
+        git archive --format=tar --prefix=$diff_path/ $diff_ver | (cd $tmp_path/ && tar xf -)
+    else
+        echo Same version selected, there is no need to compare. exit.
+        exit 0;         #No file exported before, no need to clean up tmp files.
+    fi
+else
+    diff_path="."
+fi
+
+#export base version code
+git archive --format=tar --prefix=$base_path/ $base_ver | (cd $tmp_path/ && tar xf -)
+
+if [ $diff_path = "." ];
+then
+    echo compare $base_ver with workspace.
+    bcompare $tmp_path/$base_path $diff_path
+else
+    echo compare $base_ver with ${diff_ver}.
+    bcompare $tmp_path/$base_path $tmp_path/$diff_path
+    rm -rf $tmp_path/$diff_path
+fi
+
+rm -rf $tmp_path/$base_path
