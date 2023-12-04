@@ -1,0 +1,38 @@
+{
+    "bsp_list" : [
+        {
+            "name": "bspls3a5000",
+            "toolchain": "loongarch64-sylixos-elf-",
+            "cpu_type": "loongarch64",
+            "fpu_type": "double-float",
+            "libs": [
+                {
+                    "name": "libdrv_linux_compat",
+                    "path_macro": "LINUX_COMPAT_LAYER_PATH"
+                },
+                {
+                    "name": "libls7a1000",
+                    "path_macro": "LS7A_DRV_LIB_PATH"
+                }
+            ]
+        },
+        {
+            "name": "bsprk3588",
+            "toolchain": "aarch64-sylixos-elf-",
+            "cpu_type": "cortex-a76.cortex-a55",
+            "fpu_type": "default",
+            "libs": [
+                {
+                    "name": "libdrv_linux_compat",
+                    "path_macro": "LINUX_COMPAT_LAYER_PATH"
+                }
+            ]
+        },
+        {
+            "name": "bspbm3883",
+            "toolchain": "sparc-sylixos-elf-",
+            "cpu_type": "leon3",
+            "fpu_type": "hard-float"
+        }
+    ]
+}

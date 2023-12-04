@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+
+program_name=$(basename $0)
+work_space_path="${HOME}/works/sylixos-workspace"
+config_path="${HOME}/.config/sc/config.json"
+
+function sub_help() {
+    echo "Usage: $program_name <subcommand> [options]"
+    echo "Subcommands:"
+    echo "    base      config base."
+    echo ""
+    echo "For help with each subcommand run:"
+    echo "$program_name <subcommand> -h|--help"
+    echo ""
+}
+
+function base_config() {
+    if [ -d $1 ] && [ -f $1/.project ] && [ -d $1/libsylixos ]
+    then
+        sed -i "s/^TOOLCHAIN_PREFIX =.*$/TOOLCHAIN_PREFIX = $2/" "$1/config.mk"
+        sed -i "s/^FPU_TYPE =.*$/FPU_TYPE = $3/" "$1/config.mk"
+        sed -i "s/^CPU_TYPE =.*$/CPU_TYPE = $4/" "$1/config.mk"
+        sed -i "s/^DEBUG_LEVEL =.*$/DEBUG_LEVEL = $5/" "$1/config.mk"
+    fi
+}
+
+function sub_build() {
+    local base_path=$(sed -rn "s/^(SYLIXOS_BASE_PATH.*=\s*)(.*)$/\2/p" ./config.mk)
+    if [ ! -d $base_path ]; then     #make sure base dir exists.
+        echo "Error: $base_path dose not exist, exit."
+        return -1
+    fi
+    make -C $base_path all
+}
+
+function sub_base() {
+    # Check config file
+    if [ ! -f $config_path ]; then
+        echo "Error: missing config file, exit."
+        return -1
+    fi
+
+    if [ ! -f ./.project ]||[ ! -f ./config.mk ]; then
+        echo "Error: current dir does not seems to be a SylixOS project, exit."
+        return -1
+    fi
+
+    if [ -n "$1" ]; then
+        # Base dir passed via params.
+        if [ ! -d $work_space_path/bases/$1 ]; then     #make sure base dir exists.
+            echo "Error: $work_space_path/bases/$1 dose not exist, exit."
+            return -1
+        fi
+
+        base_path=$work_space_path/bases/$1
+    else
+        echo "Configuring sylixos base..."
+        echo "Please select one of the following path as base."
+
+        base_array=($work_space_path/bases/*)
+        for i in ${!base_array[@]}; do
+            echo "$(($i+1)): ${base_array[$i]}"         #Display all valid bases.
+        done
+
+        # Let user input number to chose base path.
+        while true; do
+            read number
+            [[ $number =~ ^[0-9]+$ ]] || { echo "error, please enter a valid number"; continue; }
+
+            if ((number >= 1 && number <= $i+1)); then
+                break
+            else
+                echo "Error: Out of range, try again."
+            fi
+        done
+
+        base_path=${base_array[$number-1]}
+    fi
+
+    temp=$PWD
+    bsp_name=${temp##*/}      #current dir name
+    temp=$(cat $config_path | jq ".bsp_list[] | select(.name==\"${bsp_name}\")")
+    if [ -z "$temp" ]; then
+        return -1
+    fi
+    toolchain=`echo $temp | jq '.toolchain' | sed 's/"//g'`
+    cpu_type=`echo $temp | jq '.cpu_type' | sed 's/"//g'`
+    fpu_type=`echo $temp | jq '.fpu_type' | sed 's/"//g'`
+    debug_level="Release"
+
+    sed -ri "s|^(SYLIXOS_BASE_PATH.*=\s*)(.*)$|\1${base_path}|" ./config.mk
+    echo "Set SYLIXOS_BASE_PATH to ${base_path}."
+    echo -e "    Set $base_path with: \n\ttoolchain:\t$toolchain\n\tfpu_type:\t$fpu_type\n\tcpu_type:\t$cpu_type\n\tdebug_level:\t$debug_level"
+    base_config $base_path $toolchain $fpu_type $cpu_type $debug_level
+
+    libs_json=$(cat $config_path | jq -c "(.bsp_list[] | select(.name==\"${bsp_name}\").libs[])")
+    for v in $libs_json; do
+        lib_name=$(echo $v | jq '.name' | sed 's/"//g')
+        lib_macro=$(echo $v | jq '.path_macro' | sed 's/"//g')
+        echo "Set $lib_macro to $work_space_path/libs/$lib_name."
+        echo "    Set the base of $lib_name to ${base_path}."
+        sed -ri "s|^(${lib_macro}.*=\s*)(.*)$|\1$work_space_path/libs/$lib_name|" ./config.mk
+        sed -ri "s|^(SYLIXOS_BASE_PATH.*=\s*)(.*)$|\1${base_path}|" $work_space_path/libs/$lib_name/config.mk
+    done
+}
+
+subcommand=$1
+case $subcommand in
+    "" | "-h" | "--help")
+        sub_help
+        ;;
+    *)
+        shift
+        sub_${subcommand} $@
+        if [ $? = 127 ]; then
+            echo "Error: '$subcommand' is not a known subcommand." >&2
+            echo "       Run '$program_name --help' for a list of known subcommands." >&2
+            exit 1
+        fi
+        ;;
+esac
