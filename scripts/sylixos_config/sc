@@ -93,7 +93,7 @@ function sub_base() {
     echo -e "    Set $base_path with: \n\ttoolchain:\t$toolchain\n\tfpu_type:\t$fpu_type\n\tcpu_type:\t$cpu_type\n\tdebug_level:\t$debug_level"
     base_config $base_path $toolchain $fpu_type $cpu_type $debug_level
 
-    libs_json=$(cat $config_path | jq -c "(.bsp_list[] | select(.name==\"${bsp_name}\").libs[])")
+    libs_json=$(cat $config_path | jq -c "(.bsp_list[] | select(.name==\"${bsp_name}\") | select (.libs != null) | .libs[])")
     for v in $libs_json; do
         lib_name=$(echo $v | jq '.name' | sed 's/"//g')
         lib_macro=$(echo $v | jq '.path_macro' | sed 's/"//g')
