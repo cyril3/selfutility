@@ -33,6 +33,12 @@
             "toolchain": "sparc-sylixos-elf-",
             "cpu_type": "leon3",
             "fpu_type": "hard-float"
+        },
+        {
+            "name": "bspimx6",
+            "toolchain": "arm-sylixos-eabi-",
+            "cpu_type": "cortex-a9",
+            "fpu_type": "auto"
         }
     ]
 }
