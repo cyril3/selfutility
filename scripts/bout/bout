@@ -1,4 +1,23 @@
 #!/usr/bin/env bash
+version="v1.0.0"
+function print_help() {
+    echo "bout - Show changes between two commits or workspace using Beyound Compare."
+    echo "Usage: bout [base] [diff]"
+    echo "Options:"
+    echo "-h                 Print this message and exit."
+    echo ""
+    echo $version
+
+}
+if [ $1 = "-h" ]; then
+    print_help
+    exit 0
+fi
+
+if [ $1 = "-v" ]; then
+    echo $version
+    exit 0
+fi
 
 tmp_path="/mnt/bout"        #tmp dir
 base_ver="HEAD"
@@ -15,6 +34,7 @@ fi
 fstype=`eval mount | grep ${tmp_path} | awk '{print $1;}'`      #get tmp_path fs type
 if [ "$fstype" != "tmpfs" ];
 then
+    echo "mounting tmpfs at ${tmp_path}."
     sudo mount -t tmpfs tmpfs ${tmp_path}           #mount as tmpfs
 fi
 

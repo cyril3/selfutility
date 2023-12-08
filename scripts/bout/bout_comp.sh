@@ -1,3 +1,4 @@
+#### bout completion
 function comp_bout()
 {
     COMPREPLY=()
@@ -13,3 +14,4 @@ function comp_bout()
     return 0
 }
 complete -F comp_bout bout
+#### bout completion end

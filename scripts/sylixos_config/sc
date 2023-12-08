@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+version="1.0.0"
 program_name=$(basename $0)
 work_space_path="${HOME}/works/sylixos-workspace"
 config_path="${HOME}/.config/sc/config.json"
@@ -7,7 +8,8 @@ config_path="${HOME}/.config/sc/config.json"
 function sub_help() {
     echo "Usage: $program_name <subcommand> [options]"
     echo "Subcommands:"
-    echo "    base      config base."
+    echo "    base              config base."
+    echo "    build             build all."
     echo ""
     echo "For help with each subcommand run:"
     echo "$program_name <subcommand> -h|--help"
@@ -30,7 +32,17 @@ function sub_build() {
         echo "Error: $base_path dose not exist, exit."
         return -1
     fi
-    make -C $base_path all
+    make -C $base_path clean && make -C $base_path all              # build base
+
+    temp=$PWD
+    bsp_name=${temp##*/}      #current dir name
+    libs_json=$(cat $config_path | jq -c "(.bsp_list[] | select(.name==\"${bsp_name}\") | select (.libs != null) | .libs[])")
+    for v in $libs_json; do
+        lib_name=$(echo $v | jq '.name' | sed 's/"//g')
+        make -C $work_space_path/libs/$lib_name clean && make -C $work_space_path/libs/$lib_name all        # build libs
+    done
+
+    make clean && make all                      #build bsp
 }
 
 function sub_base() {
@@ -108,6 +120,10 @@ subcommand=$1
 case $subcommand in
     "" | "-h" | "--help")
         sub_help
+        ;;
+    "-v")
+        echo $version
+        exit 0
         ;;
     *)
         shift

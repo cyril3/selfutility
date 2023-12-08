@@ -1,3 +1,4 @@
+#### sc completion
 function comp_sc()
 {
     COMPREPLY=()
@@ -25,3 +26,4 @@ function comp_sc()
     return 0
 }
 complete -F comp_sc sc
+#### sc completion end
