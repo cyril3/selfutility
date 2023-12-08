@@ -8,6 +8,7 @@ sudo cp -vf $script_dir/sc /usr/bin
 sudo chmod -v +x /usr/bin/sc
 
 if [ ! -f ${HOME}/.config/sc/buildinfo.json ]; then
+    mkdir -p ${HOME}/.config/sc/
     echo "{\"bsp_list\":[]}" > ${HOME}/.config/sc/buildinfo.json
 fi
 
