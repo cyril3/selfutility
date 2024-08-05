@@ -7,7 +7,7 @@ function comp_sc()
 
     case $cmd in
     'sc')
-        COMPREPLY=( $(compgen -W 'base build' $cur ) )
+        COMPREPLY=( $(compgen -W 'base build rebuild' $cur ) )
     ;;
 
     'base')

@@ -25,6 +25,46 @@
                 {
                     "name": "libdrv_linux_compat",
                     "path_macro": "LINUX_COMPAT_LAYER_PATH"
+                },
+                {
+                    "name": "liblicense_sdk",
+                    "path_macro": "LICENSE_SDK_PATH"
+                }
+            ]
+        },
+        {
+            "name": "bspt1042",
+            "toolchain": "ppc-sylixos-eabi-",
+            "cpu_type": "e5500 -m32",
+            "fpu_type": "hard-float",
+            "libs": [
+                {
+                    "name": "liblicense_sdk",
+                    "path_macro": "LICENSE_SDK_PATH"
+                }
+            ]
+        },
+        {
+            "name": "bsps698pm",
+            "toolchain": "sparc-sylixos-elf-",
+            "cpu_type": "leon3",
+            "fpu_type": "hard-float",
+            "libs": [
+                {
+                    "name": "liblicense_sdk",
+                    "path_macro": "LICENSE_SDK_PATH"
+                }
+            ]
+        },
+        {
+            "name": "bspp2010",
+            "toolchain": "ppc-sylixos-eabi-",
+            "cpu_type": "8548",
+            "fpu_type": "hard-float -mspe -mfloat-gprs=double",
+            "libs": [
+                {
+                    "name": "liblicense_sdk",
+                    "path_macro": "LICENSE_SDK_PATH"
                 }
             ]
         },
@@ -33,6 +73,24 @@
             "toolchain": "sparc-sylixos-elf-",
             "cpu_type": "leon3",
             "fpu_type": "hard-float"
+        },
+        {
+            "name": "bspls2k",
+            "toolchain": "mips64-sylixos-elf-",
+            "cpu_type": "loongson2k",
+            "fpu_type": "hard-float"
+        },
+        {
+            "name": "bspfmql",
+            "toolchain": "arm-sylixos-eabi-",
+            "cpu_type": "cortex-a7",
+            "fpu_type": "auto",
+            "libs": [
+                {
+                    "name": "libdrv_linux_compat",
+                    "path_macro": "LINUX_COMPAT_LAYER_PATH"
+                }
+            ]
         },
         {
             "name": "bspimx6",

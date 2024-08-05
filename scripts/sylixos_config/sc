@@ -19,14 +19,33 @@ function sub_help() {
 function base_config() {
     if [ -d $1 ] && [ -f $1/.project ] && [ -d $1/libsylixos ]
     then
-        sed -i "s/^TOOLCHAIN_PREFIX =.*$/TOOLCHAIN_PREFIX = $2/" "$1/config.mk"
-        sed -i "s/^FPU_TYPE =.*$/FPU_TYPE = $3/" "$1/config.mk"
-        sed -i "s/^CPU_TYPE =.*$/CPU_TYPE = $4/" "$1/config.mk"
-        sed -i "s/^DEBUG_LEVEL =.*$/DEBUG_LEVEL = $5/" "$1/config.mk"
+        sed -i "s|^TOOLCHAIN_PREFIX =.*$|TOOLCHAIN_PREFIX = $2|" "$1/config.mk"
+        sed -i "s|^FPU_TYPE =.*$|FPU_TYPE = $3|" "$1/config.mk"
+        sed -i "s|^CPU_TYPE =.*$|CPU_TYPE = $4|" "$1/config.mk"
+        sed -i "s|^DEBUG_LEVEL =.*$|DEBUG_LEVEL = $5|" "$1/config.mk"
     fi
 }
 
 function sub_build() {
+    local base_path=$(sed -rn "s/^(SYLIXOS_BASE_PATH.*=\s*)(.*)$/\2/p" ./config.mk)
+    if [ ! -d $base_path ]; then     #make sure base dir exists.
+        echo "Error: $base_path dose not exist, exit."
+        return -1
+    fi
+    make -C $base_path all              # build base
+
+    temp=$PWD
+    bsp_name=${temp##*/}      #current dir name
+    libs_json=$(jq -c "(.bsp_list[] | select(.name==\"${bsp_name}\") | select (.libs != null) | .libs[])" $config_path)
+    for v in $libs_json; do
+        lib_name=$(echo $v | jq '.name' | sed 's/"//g')
+        make -C $work_space_path/libs/$lib_name all        # build libs
+    done
+
+    make all                      #build bsp
+}
+
+function sub_rebuild() {
     local base_path=$(sed -rn "s/^(SYLIXOS_BASE_PATH.*=\s*)(.*)$/\2/p" ./config.mk)
     if [ ! -d $base_path ]; then     #make sure base dir exists.
         echo "Error: $base_path dose not exist, exit."
@@ -93,6 +112,7 @@ function sub_base() {
     bsp_name=${temp##*/}      #current dir name
     temp=$(jq ".bsp_list[] | select(.name==\"${bsp_name}\")" $config_path)
     if [ -z "$temp" ]; then
+        echo "Error: Unknown BSP."
         return -1
     fi
     toolchain=`echo $temp | jq '.toolchain' | sed 's/"//g'`
@@ -103,7 +123,7 @@ function sub_base() {
     sed -ri "s|^(SYLIXOS_BASE_PATH.*=\s*)(.*)$|\1${base_path}|" ./config.mk
     echo "Set SYLIXOS_BASE_PATH to ${base_path}."
     echo -e "    Set $base_path with: \n\ttoolchain:\t$toolchain\n\tfpu_type:\t$fpu_type\n\tcpu_type:\t$cpu_type\n\tdebug_level:\t$debug_level"
-    base_config $base_path $toolchain $fpu_type $cpu_type $debug_level
+    base_config "${base_path}" "${toolchain}" "${fpu_type}" "${cpu_type}" "${debug_level}"
 
     libs_json=$(jq -c "(.bsp_list[] | select(.name==\"${bsp_name}\") | select (.libs != null) | .libs[])" $config_path)
     for v in $libs_json; do
